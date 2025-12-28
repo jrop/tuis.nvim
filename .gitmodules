@@ -1,0 +1,11 @@
+[submodule "library/busted"]
+	path = library/busted
+	url = https://github.com/LuaCATS/busted
+	branch = main
+[submodule "library/luv"]
+	path = library/luv
+	url = https://github.com/LuaCATS/luv
+	branch = main
+[submodule "lua/tuis/morph"]
+	path = lua/tuis/morph
+	url = https://github.com/jrop/morph.nvim
