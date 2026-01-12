@@ -79,7 +79,9 @@ A collection of interactive terminal user interfaces for Neovim, built on top of
 ### Using vim.pack:
 
 ```lua
-vim.pack.add('https://github.com/jrop/tuis.nvim')
+vim.pack.add {
+  { src = 'https://github.com/jrop/tuis.nvim' }
+}
 -- Then add to your `init.lua`:
 -- Optional: set up keymaps
 vim.keymap.set('n', '<leader>m', function()
