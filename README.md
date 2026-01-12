@@ -12,9 +12,57 @@ A collection of interactive terminal user interfaces for Neovim, built on top of
 - LSP server management
 - Bitwarden vault integration
 
+## Screenshots
+
+### Docker
+![Docker Containers](screenshots/docker/containers.png)
+
+<details>
+<summary>More Docker screenshots</summary>
+
+![Docker Images](screenshots/docker/images.png)
+![Docker Stats](screenshots/docker/stats.png)
+![Docker System](screenshots/docker/system.png)
+
+</details>
+
+### Kubernetes
+![Kubernetes Pods](screenshots/k8s/pods.png)
+
+<details>
+<summary>More Kubernetes screenshots</summary>
+
+![Kubernetes Deployments](screenshots/k8s/deployements.png)
+![Kubernetes Services](screenshots/k8s/services.png)
+![Kubernetes Events](screenshots/k8s/events.png)
+
+### Process Manager
+![Process Manager](screenshots/processes/processes.png)
+
+<details>
+<summary>More process manager screenshots</summary>
+
+![System Resources](screenshots/processes/resources.png)
+
+</details>
+
+</details>
+
+### More UIs
+
+<details>
+<summary>More UIs</summary>
+
+![Hacker News](screenshots/hacker-news.png)
+![Launchd Services](screenshots/launchd.png)
+![LSP Manager](screenshots/lsp-manager.png)
+![Models.dev](screenshots/models.dev.png)
+
+</details>
+
 ## Installation
 
-Using [lazy.nvim](https://github.com/folke/lazy.nvim):
+### Using lazy.nvim:
 
 ```lua
 {
@@ -28,15 +76,11 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-Using vim.pack (native Neovim package manager):
-
-```bash
-vim.pack.add('https://github.com/jrop/tuis.nvim')
-```
-
-Then add to your `init.lua`:
+### Using vim.pack:
 
 ```lua
+vim.pack.add('https://github.com/jrop/tuis.nvim')
+-- Then add to your `init.lua`:
 -- Optional: set up keymaps
 vim.keymap.set('n', '<leader>m', function()
   require('tuis').choose()
@@ -48,16 +92,16 @@ end, { desc: 'Choose Morph UI' })
 ### Listing Available UIs
 
 ```lua
-local morph_ui = require('tuis')
+local tuis = require('tuis')
 
 -- Get list of all available UIs
-local uis = morph_ui.list()
+local uis = tuis.list()
 
--- Choose from available UIs interactively
-morph_ui.choose()
+-- Choose from available UIs in a picker
+tuis.choose()
 
 -- Run a specific UI by name
-morph_ui.run('process_manager')
+tuis.run('process_manager')
 ```
 
 ### Available UIs
@@ -72,7 +116,7 @@ The plugin includes the following interactive UIs (in `lua/tuis/uis/` directory)
 
 **Services:**
 - `systemd` - Systemd service management (Linux)
-- `launchd_services` - Launchd service management (macOS)
+- `launchd` - Launchd service management (macOS)
 
 **Containers & Orchestration:**
 - `docker` - Docker container management
@@ -89,7 +133,7 @@ The plugin includes the following interactive UIs (in `lua/tuis/uis/` directory)
 - `github` - GitHub issues, PRs, and workflow runs
 - `hacker_news` - Hacker News reader
 - `models-dev` - AI models browser (models.dev)
-- `plugin_store` - Neovim plugin browser and installer
+- `plugin_store` - Neovim plugin browser and installer (__NOTE__: experimental)
 
 ## Keybindings
 
