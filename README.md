@@ -101,7 +101,7 @@ local uis = tuis.list()
 tuis.choose()
 
 -- Run a specific UI by name
-tuis.run('process_manager')
+tuis.run('processes')
 ```
 
 ### Available UIs
@@ -109,8 +109,7 @@ tuis.run('process_manager')
 The plugin includes the following interactive UIs (in `lua/tuis/uis/` directory):
 
 **System Management:**
-- `process_manager` - Interactive process viewer with kill/signal capabilities
-- `system_resources` - System resource monitoring
+- `processes` - Interactive process viewer with kill/signal capabilities
 - `lsof` - View open files and network connections
 - `lsp_manager` - LSP server management
 
