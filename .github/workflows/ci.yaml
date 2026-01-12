@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    tags: ["*"]
+    branches: ["*"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MISE_EXPERIMENTAL: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreadline-dev
+
+      - name: Setup environment
+        run: |
+          if [ -n "${{secrets.TOKEN}}" ]; then
+            export GITHUB_TOKEN="${{secrets.TOKEN}}"
+          fi
+          export MISE_GITHUB_TOKEN="$GITHUB_TOKEN"
+          echo "$GITHUB_TOKEN" >> $GITHUB_ENV
+          echo "$MISE_GITHUB_TOKEN" >> $GITHUB_ENV
+
+      - name: Install mise
+        run: |
+          curl https://mise.run | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/mise/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/share/mise/shims" >> $GITHUB_PATH
+          mise use -g rust@1.92.0
+
+      - name: Install mise dependencies
+        run: mise install
+
+      - name: Check Lua formatting
+        run: mise run fmt:check
+
+      - name: Check for type-errors
+        run: mise run lint
+
+      - name: Run tests
+        run: mise run test
