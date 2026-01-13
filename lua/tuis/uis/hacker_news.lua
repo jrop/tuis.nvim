@@ -1,7 +1,11 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
+local utils = require 'tuis.utils'
+local keymap = utils.keymap
 
 local M = {}
 
@@ -42,15 +46,6 @@ function M.is_enabled() return true end
 --------------------------------------------------------------------------------
 -- Helpers
 --------------------------------------------------------------------------------
-
---- @param fn fun()
---- @return fun(): string
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
-end
 
 --- @param timestamp number
 --- @return string
@@ -293,31 +288,18 @@ local HELP_KEYMAPS = {
   },
 }
 
---- @param ctx morph.Ctx<{ show: boolean, page: hn.Page }>
-local function Help(ctx)
-  if not ctx.props.show then return {} end
+local COMMON_KEYMAPS = {
+  { 'g1-g3', 'Navigate tabs' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle help' },
+}
 
-  local page_keymaps = HELP_KEYMAPS[ctx.props.page] or {}
-  local common_keymaps = {
-    { 'g1-g3', 'Navigate tabs' },
-    { '<Leader>r', 'Refresh' },
-    { 'g?', 'Toggle help' },
-  }
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(page_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  for _, km in ipairs(common_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
+--- @param ctx morph.Ctx<{ page: hn.Page }>
+local function HackerNewsHelp(ctx)
+  return h(Help, {
+    page_keymaps = HELP_KEYMAPS[ctx.props.page],
+    common_keymaps = COMMON_KEYMAPS,
+  })
 end
 
 --------------------------------------------------------------------------------
@@ -590,7 +572,12 @@ local function StoriesView(ctx)
     }, state.filter),
     ']',
     '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
+    h(Table, {
+      rows = rows,
+      header = true,
+      header_separator = true,
+      page_size = math.max(10, vim.o.lines - 10),
+    }),
   }
 end
 
@@ -727,7 +714,7 @@ local function App(ctx)
 
     h(TabBar, { tabs = TABS, active_page = state.page, on_select = go_to_page }),
 
-    state.show_help and { h(Help, { show = true, page = state.page }), '\n' } or nil,
+    state.show_help and { h(HackerNewsHelp, { page = state.page }), '\n' },
 
     page_content,
   })

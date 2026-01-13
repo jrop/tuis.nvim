@@ -1,9 +1,13 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local term = require 'tuis.term'
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
+local create_scratch_buffer = utils.create_scratch_buffer
 
 local M = {}
 
@@ -91,21 +95,6 @@ local function kubectl_async(args, callback)
   vim.system(vim.list_extend({ 'kubectl' }, args), { text = true }, callback)
 end
 
---- Create a scratch buffer with specific options
---- @param split 'vnew'|'new' The split command to use
---- @param filetype? string Optional filetype to set
-local function create_scratch_buffer(split, filetype)
-  if split == 'vnew' then
-    vim.cmd.vnew()
-  else
-    vim.cmd.new()
-  end
-  vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'wipe'
-  vim.bo.buflisted = false
-  if filetype then vim.cmd.setfiletype(filetype) end
-end
-
 --- Show kubectl output in a new buffer
 --- @param args string[]
 --- @param opts { split: 'vnew'|'new', filetype?: string }
@@ -133,16 +122,6 @@ end
 local function confirm_action(prompt, on_confirm)
   local choice = vim.fn.confirm(prompt, '&Yes\n&No', 2)
   if choice == 1 then vim.schedule(on_confirm) end
-end
-
---- Wrap a keymap handler to return '' (required by morph nmap callbacks)
---- @param fn fun()
---- @return fun(): string
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
 end
 
 --------------------------------------------------------------------------------
@@ -204,31 +183,18 @@ local HELP_KEYMAPS = {
   },
 }
 
---- @param ctx morph.Ctx<{ show: boolean, page: k8s.Page }>
-local function Help(ctx)
-  if not ctx.props.show then return {} end
+local COMMON_KEYMAPS = {
+  { 'g1-g5', 'Navigate tabs' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle help' },
+}
 
-  local page_keymaps = HELP_KEYMAPS[ctx.props.page] or {}
-  local common_keymaps = {
-    { 'g1-g5', 'Navigate tabs' },
-    { '<Leader>r', 'Refresh' },
-    { 'g?', 'Toggle help' },
-  }
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(page_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  for _, km in ipairs(common_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
+--- @param ctx morph.Ctx<{ page: k8s.Page }>
+local function K8sHelp(ctx)
+  return h(Help, {
+    page_keymaps = HELP_KEYMAPS[ctx.props.page],
+    common_keymaps = COMMON_KEYMAPS,
+  })
 end
 
 --------------------------------------------------------------------------------
@@ -543,7 +509,12 @@ local function create_resource_view(config)
       }, state.filter),
       ']',
       '\n\n',
-      h(Table, { rows = rows, header = true, header_separator = true }),
+      h(Table, {
+        rows = rows,
+        header = true,
+        header_separator = true,
+        page_size = math.max(10, vim.o.lines - 10),
+      }),
     }
   end
 end
@@ -1040,7 +1011,7 @@ local function App(ctx)
       or nil,
 
     -- Help panel (toggleable)
-    state.show_help and { h(Help, { show = true, page = state.page }), '\n' } or nil,
+    state.show_help and { h(K8sHelp, { page = state.page }), '\n' },
 
     -- Main content
     page_content,

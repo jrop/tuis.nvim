@@ -1,9 +1,12 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local sudo = require 'tuis.sudo'
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
 
 local M = {}
 
@@ -70,20 +73,7 @@ local function run(cmd, opts, on_exit)
   if not opts or not opts.root then return do_cmd() end
 
   table.insert(cmd, 1, 'sudo')
-  if sudo.is_password_cached() then return do_cmd() end
-
-  sudo.prompt_for_password(function(pw)
-    if not pw then return end
-    sudo.cache_password(pw)
-    do_cmd()
-  end)
-end
-
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
+  sudo.with_sudo(function() do_cmd() end)
 end
 
 --------------------------------------------------------------------------------
@@ -127,33 +117,20 @@ local HELP_KEYMAPS = {
   },
 }
 
---- @param ctx morph.Ctx<{ show: boolean, page: launchd.Page }>
-local function Help(ctx)
-  if not ctx.props.show then return {} end
+local COMMON_KEYMAPS = {
+  { 'g1-g4', 'Navigate tabs' },
+  { '<Leader>r', 'Refresh' },
+  { '<Leader>s', 'Switch to system namespace' },
+  { '<Leader>u', 'Switch to user namespace' },
+  { 'g?', 'Toggle help' },
+}
 
-  local page_keymaps = HELP_KEYMAPS[ctx.props.page] or {}
-  local common_keymaps = {
-    { 'g1-g4', 'Navigate tabs' },
-    { '<Leader>r', 'Refresh' },
-    { '<Leader>s', 'Switch to system namespace' },
-    { '<Leader>u', 'Switch to user namespace' },
-    { 'g?', 'Toggle help' },
-  }
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(page_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  for _, km in ipairs(common_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
+--- @param ctx morph.Ctx<{ page: launchd.Page }>
+local function LaunchdHelp(ctx)
+  return h(Help, {
+    page_keymaps = HELP_KEYMAPS[ctx.props.page],
+    common_keymaps = COMMON_KEYMAPS,
+  })
 end
 
 --------------------------------------------------------------------------------
@@ -753,7 +730,7 @@ local function App(ctx)
 
     h(TabBar, { tabs = TABS, active_page = state.page, on_select = go_to_page, wrap_at = 5 }),
 
-    state.show_help and { h(Help, { show = true, page = state.page }), '\n' } or nil,
+    state.show_help and { h(LaunchdHelp, { page = state.page }), '\n' },
 
     page_view,
   })

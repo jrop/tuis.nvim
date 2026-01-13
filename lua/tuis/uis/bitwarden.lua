@@ -1,8 +1,12 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
+local create_scratch_buffer = utils.create_scratch_buffer
 
 local M = {}
 
@@ -153,31 +157,6 @@ end
 -- Helpers
 --------------------------------------------------------------------------------
 
---- Wrap a keymap handler to return '' (required by morph nmap callbacks)
---- @param fn fun()
---- @return fun(): string
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
-end
-
---- Create a scratch buffer with specific options
---- @param split 'vnew'|'new' The split command to use
---- @param filetype? string Optional filetype to set
-local function create_scratch_buffer(split, filetype)
-  if split == 'vnew' then
-    vim.cmd.vnew()
-  else
-    vim.cmd.new()
-  end
-  vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'wipe'
-  vim.bo.buflisted = false
-  if filetype then vim.cmd.setfiletype(filetype) end
-end
-
 --- Get item type as string
 --- @param type_num bitwarden.ItemType
 --- @return string
@@ -234,31 +213,20 @@ local HELP_KEYMAPS = {
   },
 }
 
+local COMMON_KEYMAPS = {
+  { 'g1-g4', 'Navigate tabs' },
+  { '[[', 'Previous page' },
+  { ']]', 'Next page' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle help' },
+}
+
 --- @param ctx morph.Ctx<{ page: bitwarden.Page }>
-local function Help(ctx)
-  local page_keymaps = HELP_KEYMAPS[ctx.props.page] or {}
-  local common_keymaps = {
-    { 'g1-g4', 'Navigate tabs' },
-    { '[[', 'Previous page' },
-    { ']]', 'Next page' },
-    { '<Leader>r', 'Refresh' },
-    { 'g?', 'Toggle help' },
-  }
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(page_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  for _, km in ipairs(common_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
+local function BitwardenHelp(ctx)
+  return h(Help, {
+    page_keymaps = HELP_KEYMAPS[ctx.props.page],
+    common_keymaps = COMMON_KEYMAPS,
+  })
 end
 
 --------------------------------------------------------------------------------
@@ -272,7 +240,6 @@ local TABS = {
   { key = 'g3', page = 'organizations', label = 'Organizations' },
   { key = 'g4', page = 'vault', label = 'Vault' },
 }
-
 
 --------------------------------------------------------------------------------
 -- Data Fetching
@@ -732,7 +699,12 @@ local function FoldersView(ctx)
     ']',
 
     '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
+    h(Table, {
+      rows = rows,
+      header = true,
+      header_separator = true,
+      page_size = math.max(10, vim.o.lines - 10),
+    }),
     '\n',
     h.NonText({}, 'Press <CR> on a folder to filter items'),
   }
@@ -808,7 +780,12 @@ local function OrganizationsView(ctx)
     ']',
 
     '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
+    h(Table, {
+      rows = rows,
+      header = true,
+      header_separator = true,
+      page_size = math.max(10, vim.o.lines - 10),
+    }),
   }
 end
 
@@ -1131,7 +1108,7 @@ local function App(ctx)
     h(TabBar, { tabs = TABS, active_page = state.page, on_select = go_to_page }),
 
     -- Help panel (toggleable)
-    state.show_help and { h(Help, { page = state.page }), '\n' } or nil,
+    state.show_help and { h(BitwardenHelp, { page = state.page }), '\n' },
 
     -- Main content
     page_content,

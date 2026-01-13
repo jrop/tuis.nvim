@@ -1,8 +1,11 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
 
 local M = {}
 
@@ -688,24 +691,8 @@ local HELP_KEYMAPS = {
   { 'g?', 'Toggle help' },
 }
 
---- @param ctx morph.Ctx<{ show: boolean }>
-local function Help(ctx)
-  if not ctx.props.show then return {} end
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, keymap in ipairs(HELP_KEYMAPS) do
-    table.insert(rows, {
-      cells = { h.Title({}, keymap[1]), h.Normal({}, keymap[2]) },
-    })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
-end
+--- @param ctx morph.Ctx<{}>
+local function PluginStoreHelp(ctx) return h(Help, { common_keymaps = HELP_KEYMAPS }) end
 
 --------------------------------------------------------------------------------
 -- UI Components: Navigation Tabs
@@ -1493,10 +1480,13 @@ local function App(ctx)
     '\n\n',
 
     -- Navigation tabs
-    h(TabBar, { tabs = NAV_TABS, active_page = get_active_tab(state.page), on_select = navigate_to }),
+    h(
+      TabBar,
+      { tabs = NAV_TABS, active_page = get_active_tab(state.page), on_select = navigate_to }
+    ),
 
     -- Help panel (toggleable)
-    state.show_help and { h(Help, { show = true }), '\n' } or nil,
+    state.show_help and { h(PluginStoreHelp, {}), '\n' },
 
     -- Current page content
     page_content,

@@ -5,7 +5,9 @@ local Table = components.Table
 local Meter = components.Meter
 local Sparkline = components.Sparkline
 local TabBar = components.TabBar
+local Help = components.Help
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
 
 local M = {}
 
@@ -13,7 +15,7 @@ local platform = vim.loop.os_uname().sysname
 local is_macos = platform == 'Darwin'
 local is_linux = platform == 'Linux'
 
-local CLI_DEPENDENCIES = { 'ps', 'lsof', 'kill', 'top', 'vm_stat', 'sysctl', 'df' }
+local CLI_DEPENDENCIES = { 'ps', 'lsof', 'kill', 'df' }
 if is_macos then vim.list_extend(CLI_DEPENDENCIES, { 'sysctl', 'top', 'vm_stat', 'netstat' }) end
 
 function M.is_enabled() return utils.check_clis_available(CLI_DEPENDENCIES, true) end
@@ -120,7 +122,10 @@ local function fetch_cpu_stats(callback)
       return
     end
 
-    local total = (tonumber(user) or 0) + (tonumber(nice) or 0) + (tonumber(system) or 0) + (tonumber(idle) or 0)
+    local total = (tonumber(user) or 0)
+      + (tonumber(nice) or 0)
+      + (tonumber(system) or 0)
+      + (tonumber(idle) or 0)
     local overall = ((total - (tonumber(idle) or 0)) / total) * 100
 
     local cores = {}
@@ -414,21 +419,22 @@ local TABS = {
   { key = 'g2', page = 'resources', label = 'Resources' },
 }
 
-local function Help()
-  return {
-    h.RenderMarkdownH2({}, 'Help'),
-    '\n\n',
-    h(Table, {
-      rows = {
-        { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'DESCRIPTION') } },
-        { cells = { '<Leader>r', 'Refresh' } },
-        { cells = { 'g1', 'Processes tab' } },
-        { cells = { 'g2', 'Resources tab' } },
-        { cells = { 'g?', 'Toggle this help' } },
-      },
-    }),
-  }
-end
+local HELP_KEYMAPS = {
+  { 'gi', 'Show process environment' },
+  { 'gl', 'Show open files (lsof)' },
+  { 'gk', 'Kill process' },
+  { 'sp', 'Sort by PID' },
+  { 'sc', 'Sort by CPU' },
+  { 'sm', 'Sort by MEM' },
+  { 'gs', 'Toggle CPU/Mem stats' },
+  { 'gn', 'Toggle network' },
+  { 'g1', 'Processes tab' },
+  { 'g2', 'Resources tab' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle this help' },
+}
+
+local function ProcessesHelp() return h(Help, { common_keymaps = HELP_KEYMAPS }) end
 
 local function CpuPanel(cpu)
   local cores = cpu.cores or {}
@@ -689,37 +695,46 @@ local function ProcessesPanel(ctx)
   local result = {}
 
   if state.show_stats then
-    for _, v in ipairs(CpuPanel(state.cpu)) do table.insert(result, v) end
+    for _, v in ipairs(CpuPanel(state.cpu)) do
+      table.insert(result, v)
+    end
     table.insert(result, '\n')
-    for _, v in ipairs(MemoryPanel(state.memory)) do table.insert(result, v) end
+    for _, v in ipairs(MemoryPanel(state.memory)) do
+      table.insert(result, v)
+    end
     table.insert(result, '\n')
   end
 
   if state.show_network and #state.network > 0 then
-    for _, v in ipairs(NetworkPanel(state.network)) do table.insert(result, v) end
+    for _, v in ipairs(NetworkPanel(state.network)) do
+      table.insert(result, v)
+    end
     table.insert(result, '\n')
   end
 
-  table.insert(result, h('text', {
-    nmap = {
-      ['<C-Space>'] = function()
-        state.show_all_users = not state.show_all_users
-        state.table_page = 1
-        vim.schedule(function()
-          fetch_process_list(state.show_all_users, function(processes)
-            state.processes = processes
-            ctx:update(state)
+  table.insert(
+    result,
+    h('text', {
+      nmap = {
+        ['<C-Space>'] = function()
+          state.show_all_users = not state.show_all_users
+          state.table_page = 1
+          vim.schedule(function()
+            fetch_process_list(state.show_all_users, function(processes)
+              state.processes = processes
+              ctx:update(state)
+            end)
           end)
-        end)
-        return ''
-      end,
-    },
-  }, {
-    '- [',
-    state.show_all_users and 'X' or ' ',
-    '] Show all processes',
-    '\n\n',
-  }))
+          return ''
+        end,
+      },
+    }, {
+      '- [',
+      state.show_all_users and 'X' or ' ',
+      '] Show all processes',
+      '\n\n',
+    })
+  )
 
   table.insert(result, {
     h.Label({}, 'Filter: '),
@@ -738,16 +753,19 @@ local function ProcessesPanel(ctx)
     '\n\n',
   })
 
-  table.insert(result, h(Table, {
-    rows = build_process_table_rows(filtered_processes),
-    header = true,
-    page = state.table_page,
-    page_size = math.floor(vim.o.lines),
-    on_page_changed = function(new_page)
-      state.table_page = new_page
-      ctx:update(state)
-    end,
-  }))
+  table.insert(
+    result,
+    h(Table, {
+      rows = build_process_table_rows(filtered_processes),
+      header = true,
+      page = state.table_page,
+      page_size = math.floor(vim.o.lines),
+      on_page_changed = function(new_page)
+        state.table_page = new_page
+        ctx:update(state)
+      end,
+    })
+  )
 
   return result
 end
@@ -817,9 +835,9 @@ local function ResourcesPanel(ctx)
     h.Label({}, '15m: '),
     h.Number({}, string.format('%.2f', state.load.fifteen)),
   }
-  end
+end
 
-  local function App(ctx)
+local function App(ctx)
   local function create_sort_handler(column, default_descending)
     return function()
       local state = assert(ctx.state)
@@ -945,9 +963,7 @@ local function ResourcesPanel(ctx)
     state.tab = tab
     ctx:update(state)
     vim.fn.winrestview { topline = 1, lnum = 1 }
-    if tab == 'resources' then
-      vim.schedule(refresh_resources_wrapped)
-    end
+    if tab == 'resources' then vim.schedule(refresh_resources_wrapped) end
   end
 
   local nav_keymaps = {
@@ -1021,7 +1037,7 @@ local function ResourcesPanel(ctx)
       wrap_at = 5,
     }),
 
-    state.show_help and { h(Help), '\n\n' } or nil,
+    state.show_help and { ProcessesHelp(), '\n' },
 
     page_content,
   })

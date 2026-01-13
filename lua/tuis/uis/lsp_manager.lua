@@ -1,6 +1,8 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
+local components = require 'tuis.components'
+local Table = components.Table
+local Help = components.Help
 
 local M = {}
 
@@ -64,41 +66,18 @@ end
 -- Help Component
 --------------------------------------------------------------------------------
 
+local HELP_KEYMAPS = {
+  { 'gi', 'Show LSP client details (JSON)' },
+  { 'gk', 'Stop LSP client' },
+  { 'gl', 'Show LSP logs' },
+  { '<Leader>r', 'Refresh LSP clients' },
+  { 'g?', 'Toggle this help' },
+}
+
 --- @param ctx morph.Ctx<{ show_help: boolean }, any>
-local function Help(ctx)
+local function LspHelp(ctx)
   if not ctx.props.show_help then return {} end
-
-  local help_table = {}
-
-  table.insert(help_table, {
-    cells = {
-      h.Constant({}, 'KEY'),
-      h.Constant({}, 'ACTION'),
-    },
-  })
-
-  local keymaps = {
-    { 'gi', 'Show LSP client details (JSON)' },
-    { 'gk', 'Stop LSP client' },
-    { 'gl', 'Show LSP logs' },
-    { '<Leader>r', 'Refresh LSP clients' },
-    { 'g?', 'Toggle this help' },
-  }
-
-  for _, keymap in ipairs(keymaps) do
-    table.insert(help_table, {
-      cells = {
-        h.Title({}, keymap[1]),
-        h.Normal({}, keymap[2]),
-      },
-    })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = help_table, header = true, header_separator = true }),
-  }
+  return h(Help, { common_keymaps = HELP_KEYMAPS })
 end
 
 --------------------------------------------------------------------------------
@@ -208,7 +187,10 @@ local function LspClients(ctx)
 
     ctx.props.clients and '\n\n' or '',
 
-    h(Table, { rows = clients_h_table }),
+    h(Table, {
+      rows = clients_h_table,
+      page_size = math.max(10, vim.o.lines - 10),
+    }),
   }
 end
 
@@ -269,7 +251,7 @@ local function App(ctx)
     --
     state.show_help
       and {
-        h(Help, {
+        h(LspHelp, {
           show_help = state.show_help,
         }),
         '\n\n',

@@ -995,9 +995,7 @@ describe('Morph-UI Components', function()
             })
 
             -- Should not error when mounting
-            assert.has_no_error(function()
-              r:mount(table_tree)
-            end)
+            assert.has_no_error(function() r:mount(table_tree) end)
 
             local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
             local text = table.concat(lines, '\n')
@@ -1008,9 +1006,7 @@ describe('Morph-UI Components', function()
             assert.matches('Row2', text)
 
             -- Navigation should not error even without callback
-            assert.has_no_error(function()
-              vim.api.nvim_feedkeys(']]', 'x', false)
-            end)
+            assert.has_no_error(function() vim.api.nvim_feedkeys(']]', 'x', false) end)
           end)
         end)
 
@@ -1087,7 +1083,8 @@ describe('Morph-UI Components', function()
 
         -- Active tab should be highlighted with H2Bg
         -- The inactive tabs use H2, active uses H2Bg
-        local ns = vim.api.nvim_create_namespace(('morph:%d'):format(vim.api.nvim_get_current_buf()))
+        local ns =
+          vim.api.nvim_create_namespace(('morph:%d'):format(vim.api.nvim_get_current_buf()))
         local extmarks = vim.api.nvim_buf_get_extmarks(
           0,
           ns,

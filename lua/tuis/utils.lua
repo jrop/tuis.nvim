@@ -1,5 +1,42 @@
 local M = {}
 
+--------------------------------------------------------------------------------
+-- Keymap Helper
+--------------------------------------------------------------------------------
+
+--- Wrap a keymap handler to return '' (required by morph nmap callbacks)
+--- @param fn fun()
+--- @return fun(): string
+function M.keymap(fn)
+  return function()
+    vim.schedule(fn)
+    return ''
+  end
+end
+
+--------------------------------------------------------------------------------
+-- Scratch Buffer
+--------------------------------------------------------------------------------
+
+--- Create a scratch buffer with specific options
+--- @param split 'vnew'|'new' The split command to use
+--- @param filetype? string Optional filetype to set
+function M.create_scratch_buffer(split, filetype)
+  if split == 'vnew' then
+    vim.cmd.vnew()
+  else
+    vim.cmd.new()
+  end
+  vim.bo.buftype = 'nofile'
+  vim.bo.bufhidden = 'wipe'
+  vim.bo.buflisted = false
+  if filetype then vim.cmd.setfiletype(filetype) end
+end
+
+--------------------------------------------------------------------------------
+-- CLI Availability
+--------------------------------------------------------------------------------
+
 --- @param clis string[]
 --- @param silent? boolean Whether to suppress warnings
 function M.check_clis_available(clis, silent)

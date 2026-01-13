@@ -1,9 +1,13 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local term = require 'tuis.term'
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
+local create_scratch_buffer = utils.create_scratch_buffer
 
 local M = {}
 
@@ -64,15 +68,6 @@ function M.is_enabled() return utils.check_clis_available(CLI_DEPENDENCIES, true
 -- Helpers
 --------------------------------------------------------------------------------
 
---- @param fn fun()
---- @return fun(): string
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
-end
-
 --- @param page systemd.Page
 --- @return string
 local function get_unit_type(page)
@@ -125,13 +120,6 @@ local function make_logs_command(namespace, unit)
   end
 end
 
-local function create_scratch_buffer()
-  vim.cmd.vnew()
-  vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'wipe'
-  vim.bo.buflisted = false
-end
-
 --- @param namespace 'system'|'user'
 --- @param unit string
 local function show_inspect(namespace, unit)
@@ -141,8 +129,7 @@ local function show_inspect(namespace, unit)
 
     vim.system(cmd, { text = true }, function(result)
       vim.schedule(function()
-        create_scratch_buffer()
-        vim.cmd.setfiletype 'json'
+        create_scratch_buffer('vnew', 'json')
         local json = vim.trim(result.stdout or '{}')
         vim.api.nvim_buf_set_lines(0, 0, -1, true, vim.split(json, '\n'))
       end)
@@ -204,33 +191,20 @@ local HELP_KEYMAPS = {
   device = {},
 }
 
---- @param ctx morph.Ctx<{ show: boolean, page: systemd.Page }>
-local function Help(ctx)
-  if not ctx.props.show then return {} end
+local COMMON_KEYMAPS = {
+  { 'g1-g9', 'Navigate unit types' },
+  { '<Leader>r', 'Refresh' },
+  { '<Leader>s', 'Switch to system namespace' },
+  { '<Leader>u', 'Switch to user namespace' },
+  { 'g?', 'Toggle help' },
+}
 
-  local page_keymaps = HELP_KEYMAPS[ctx.props.page] or {}
-  local common_keymaps = {
-    { 'g1-g9', 'Navigate unit types' },
-    { '<Leader>r', 'Refresh' },
-    { '<Leader>s', 'Switch to system namespace' },
-    { '<Leader>u', 'Switch to user namespace' },
-    { 'g?', 'Toggle help' },
-  }
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(page_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  for _, km in ipairs(common_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
+--- @param ctx morph.Ctx<{ page: systemd.Page }>
+local function SystemdHelp(ctx)
+  return h(Help, {
+    page_keymaps = HELP_KEYMAPS[ctx.props.page],
+    common_keymaps = COMMON_KEYMAPS,
+  })
 end
 
 --------------------------------------------------------------------------------
@@ -382,7 +356,12 @@ local function create_resource_view(config)
       }, state.filter),
       ']',
       '\n\n',
-      h(Table, { rows = rows, header = true, header_separator = true }),
+      h(Table, {
+        rows = rows,
+        header = true,
+        header_separator = true,
+        page_size = math.max(10, vim.o.lines - 10),
+      }),
     }
   end
 end
@@ -910,7 +889,7 @@ local function App(ctx)
 
     h(TabBar, { tabs = TABS, active_page = state.page, on_select = go_to_page, wrap_at = 5 }),
 
-    state.show_help and { h(Help, { show = true, page = state.page }), '\n' } or nil,
+    state.show_help and { h(SystemdHelp, { page = state.page }), '\n' },
 
     page_view,
   })

@@ -1,7 +1,11 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
+local components = require 'tuis.components'
+local Table = components.Table
+local Help = components.Help
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
+local create_scratch_buffer = utils.create_scratch_buffer
 
 local M = {}
 
@@ -52,31 +56,6 @@ function M.is_enabled() return utils.check_clis_available(CLI_DEPENDENCIES, true
 --------------------------------------------------------------------------------
 -- Helpers
 --------------------------------------------------------------------------------
-
---- Wrap a keymap handler to return '' (required by morph nmap callbacks)
---- @param fn fun()
---- @return fun(): string
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
-end
-
---- Create a scratch buffer with specific options
---- @param split 'vnew'|'new' The split command to use
---- @param filetype? string Optional filetype to set
-local function create_scratch_buffer(split, filetype)
-  if split == 'vnew' then
-    vim.cmd.vnew()
-  else
-    vim.cmd.new()
-  end
-  vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'wipe'
-  vim.bo.buflisted = false
-  if filetype then vim.cmd.setfiletype(filetype) end
-end
 
 --- Format cost in dollars per million tokens
 --- @param cost number
@@ -179,26 +158,26 @@ local function fetch_models(callback)
 end
 
 --------------------------------------------------------------------------------
--- Help Component
+-- Help Keymaps
 --------------------------------------------------------------------------------
 
---- @param _ctx morph.Ctx
---- @return morph.Tree[]
-local function Help(_ctx)
-  local rows = {
-    { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } },
-    { cells = { h.Title({}, 'gi'), h.Normal({}, 'Inspect model (JSON)') } },
-    { cells = { h.Title({}, '[['), h.Normal({}, 'Previous page') } },
-    { cells = { h.Title({}, ']]'), h.Normal({}, 'Next page') } },
-    { cells = { h.Title({}, '<Leader>r'), h.Normal({}, 'Refresh') } },
-    { cells = { h.Title({}, 'g?'), h.Normal({}, 'Toggle help') } },
-  }
+local PAGE_KEYMAPS = {
+  { 'gi', 'Inspect model (JSON)' },
+}
 
+local COMMON_KEYMAPS = {
+  { '[[', 'Previous page' },
+  { ']]', 'Next page' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle help' },
+}
+
+--- @param ctx morph.Ctx<{}>
+--- @return morph.Tree[]
+local function ModelsHelp(ctx)
   return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n\n',
+    h(Help, { page_keymaps = PAGE_KEYMAPS, common_keymaps = COMMON_KEYMAPS }),
+    '\n',
     h.RenderMarkdownH1({}, '## Legend'),
     '\n',
     '🧠 Reasoning  🔧 Tools  📎 Attachments  🔓 Open weights  ⚠ Deprecated',
@@ -328,10 +307,10 @@ local function App(ctx)
     '\n\n',
 
     -- Help panel
-    state.show_help and { h(Help), '\n' } or nil,
+    state.show_help and h(ModelsHelp, {}),
 
     -- Error display
-    state.error and { h.DiagnosticError({}, state.error), '\n\n' } or nil,
+    state.error and { h.DiagnosticError({}, state.error), '\n\n' },
 
     -- Filter input
     h.Label({}, 'Filter: '),

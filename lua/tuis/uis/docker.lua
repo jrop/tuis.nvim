@@ -1,9 +1,13 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local term = require 'tuis.term'
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
+local create_scratch_buffer = utils.create_scratch_buffer
 
 local M = {}
 
@@ -121,31 +125,6 @@ function M.is_enabled() return utils.check_clis_available(CLI_DEPENDENCIES, true
 -- Helpers
 --------------------------------------------------------------------------------
 
---- Wrap a keymap handler to return '' (required by morph nmap callbacks)
---- @param fn fun()
---- @return fun(): string
-local function keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
-end
-
---- Create a scratch buffer with specific options
---- @param split 'vnew'|'new' The split command to use
---- @param filetype? string Optional filetype to set
-local function create_scratch_buffer(split, filetype)
-  if split == 'vnew' then
-    vim.cmd.vnew()
-  else
-    vim.cmd.new()
-  end
-  vim.bo.buftype = 'nofile'
-  vim.bo.bufhidden = 'wipe'
-  vim.bo.buflisted = false
-  if filetype then vim.cmd.setfiletype(filetype) end
-end
-
 --- Show docker inspect output in a vertical split
 --- @param type string e.g., 'container', 'image', 'volume', 'network'
 --- @param id string
@@ -245,29 +224,18 @@ local HELP_KEYMAPS = {
   },
 }
 
+local COMMON_KEYMAPS = {
+  { 'g1-g8', 'Navigate tabs' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle help' },
+}
+
 --- @param ctx morph.Ctx<{ page: docker.Page }>
-local function Help(ctx)
-  local page_keymaps = HELP_KEYMAPS[ctx.props.page] or {}
-  local common_keymaps = {
-    { 'g1-g8', 'Navigate tabs' },
-    { '<Leader>r', 'Refresh' },
-    { 'g?', 'Toggle help' },
-  }
-
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(page_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  for _, km in ipairs(common_keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
+local function DockerHelp(ctx)
+  return h(Help, {
+    page_keymaps = HELP_KEYMAPS[ctx.props.page],
+    common_keymaps = COMMON_KEYMAPS,
+  })
 end
 
 --------------------------------------------------------------------------------
@@ -728,7 +696,12 @@ local function create_resource_view(config)
       }, state.filter),
       ']',
       '\n\n',
-      h(Table, { rows = rows, header = true, header_separator = true }),
+      h(Table, {
+        rows = rows,
+        header = true,
+        header_separator = true,
+        page_size = math.max(10, vim.o.lines - 10),
+      }),
     }
   end
 end
@@ -1414,9 +1387,7 @@ local function HubView(ctx)
         vim.fn.setreg('"', pull_cmd)
         vim.notify('Yanked: ' .. pull_cmd)
       end),
-      ['gw'] = keymap(function()
-        vim.ui.open(hub_url)
-      end),
+      ['gw'] = keymap(function() vim.ui.open(hub_url) end),
     }
     return h('text', { nmap = page_keymaps }, detail_content)
   end
@@ -1437,6 +1408,7 @@ local function HubView(ctx)
     local hub_url = result.is_official and ('https://hub.docker.com/_/' .. result.name)
       or ('https://hub.docker.com/r/' .. full_name)
     local name_cell = h[result.is_official and 'DiagnosticOk' or 'Constant']({}, full_name)
+    local description = vim.trim(result.description)
     table.insert(results_rows, {
       nmap = {
         ['<CR>'] = keymap(function() ctx.props.on_select(result) end),
@@ -1448,10 +1420,7 @@ local function HubView(ctx)
       },
       cells = {
         name_cell,
-        h.Comment(
-          {},
-          result.description:sub(1, 60) .. (result.description:len() > 60 and '...' or '')
-        ),
+        h.Comment({}, description:sub(1, 60) .. (description:len() > 60 and '...' or '')),
         h.Number({}, tostring(result.star_count)),
         h.Number({}, tostring(result.pull_count)),
       },
@@ -1719,7 +1688,7 @@ local function App(ctx)
     }),
 
     -- Help panel (toggleable)
-    state.show_help and { h(Help, { page = state.page }), '\n' } or nil,
+    state.show_help and { h(DockerHelp, { page = state.page }), '\n' },
 
     -- Main content
     page_content,

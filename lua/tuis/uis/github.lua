@@ -1,9 +1,12 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
-local TabBar = require('tuis.components').TabBar
+local components = require 'tuis.components'
+local Table = components.Table
+local TabBar = components.TabBar
+local Help = components.Help
 local term = require 'tuis.term'
 local utils = require 'tuis.utils'
+local keymap = utils.keymap
 
 local M = {}
 
@@ -627,41 +630,28 @@ local function BodySection(body, max_len)
   }
 end
 
+local HELP_KEYMAPS = {
+  { '<CR>', 'Open/View details' },
+  { '<C-o>', 'Go back' },
+  { 'g1-g4', 'Navigate tabs' },
+  { 'gw', 'Open in browser' },
+  { 'gc', 'Checkout PR' },
+  { 'gm', 'Merge PR' },
+  { 'ga', 'Approve PR' },
+  { 'gd', 'Show PR diff' },
+  { 'gr', 'Rerun workflow' },
+  { 'gl', 'View logs' },
+  { 'g+', 'Yank URL to +' },
+  { 'g"', 'Yank URL to "' },
+  { 'g#', 'Yank number' },
+  { '<Leader>r', 'Refresh' },
+  { 'g?', 'Toggle help' },
+}
+
 --- Help component
---- @param ctx morph.Ctx<{ show: boolean }>
+--- @param ctx morph.Ctx<{}>
 --- @return morph.Tree[]
-local function Help(ctx)
-  if not ctx.props.show then return {} end
-  local keymaps = {
-    { '<CR>', 'Open/View details' },
-    { '<C-o>', 'Go back' },
-    { 'g1-g4', 'Navigate tabs' },
-    { 'gw', 'Open in browser' },
-    { 'gc', 'Checkout PR' },
-    { 'gm', 'Merge PR' },
-    { 'ga', 'Approve PR' },
-    { 'gc', 'Checkout PR' },
-    { 'gm', 'Merge PR' },
-    { 'gd', 'Show PR diff' },
-    { 'gr', 'Rerun workflow' },
-    { 'gl', 'View logs' },
-    { 'g+', 'Yank URL to +' },
-    { 'g"', 'Yank URL to "' },
-    { 'g#', 'Yank number' },
-    { '<Leader>r', 'Refresh' },
-    { 'g?', 'Toggle help' },
-  }
-  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
-  for _, km in ipairs(keymaps) do
-    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
-  end
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = rows, header = true, header_separator = true }),
-    '\n',
-  }
-end
+local function GithubHelp(ctx) return h(Help, { common_keymaps = HELP_KEYMAPS }) end
 
 --- Breadcrumb component for detail views
 --- @param ctx morph.Ctx<{ page: gh.Page, repo: string|nil, selected_pr: number|nil, selected_issue: number|nil, selected_run: number|nil, on_back: fun() }>
@@ -723,9 +713,7 @@ local TABS = {
 local function get_active_tab(page)
   for _, tab in ipairs(TABS) do
     -- Direct match or page contains the tab prefix (e.g., "issue" in "issue_detail" matches "issues")
-    if page == tab.page or page:find(tab.page:sub(1, -2)) ~= nil then
-      return tab.page
-    end
+    if page == tab.page or page:find(tab.page:sub(1, -2)) ~= nil then return tab.page end
   end
   return page
 end
@@ -772,8 +760,12 @@ local function FilterableList(ctx, opts)
     ']',
     state.filter == '' and h.Comment({}, ' type to search') or nil,
     '\n\n',
-    #opts.items == 0 and not opts.loading and h.Comment({}, opts.empty_msg)
-      or h(Table, { rows = rows, header = true, header_separator = true }),
+    #opts.items == 0 and not opts.loading and h.Comment({}, opts.empty_msg) or h(Table, {
+      rows = rows,
+      header = true,
+      header_separator = true,
+      page_size = math.max(10, vim.o.lines - 10),
+    }),
   }
 end
 
@@ -1625,8 +1617,7 @@ local function App(ctx)
       selected_run = state.selected_run,
       on_back = go_back,
     }),
-    state.show_help and h(Help, { show = true }) or nil,
-    state.show_help and '\n' or nil,
+    state.show_help and { h(GithubHelp, {}), '\n' },
     page_content,
   })
 end

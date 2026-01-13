@@ -1,5 +1,6 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
+local utils = require 'tuis.utils'
 
 local M = {}
 
@@ -444,16 +445,6 @@ end
 ---   separator?: string
 --- }
 
---- Wrap a keymap handler to return '' (required by morph nmap callbacks)
---- @param fn fun()
---- @return fun(): string
-local function tab_keymap(fn)
-  return function()
-    vim.schedule(fn)
-    return ''
-  end
-end
-
 --- A tab bar component with optional line wrapping
 --- @param ctx morph.Ctx<morph.TabBarProps>
 --- @return morph.Tree[]
@@ -485,7 +476,7 @@ function M.TabBar(ctx)
 
     local keymaps = {}
     if props.on_select then
-      keymaps['<CR>'] = tab_keymap(function() props.on_select(tab.page) end)
+      keymaps['<CR>'] = utils.keymap(function() props.on_select(tab.page) end)
     end
 
     table.insert(result, h('text', { nmap = keymaps }, tab_content))
@@ -493,6 +484,43 @@ function M.TabBar(ctx)
   end
 
   return { result, '\n\n' }
+end
+
+--  _   _      _
+-- | | | | ___| |_ __
+-- | |_| |/ _ \ | '_ \
+-- |  _  |  __/ | |_) |
+-- |_| |_|\___|_| .__/
+--              |_|
+
+--- @alias morph.HelpKeymap { [1]: string, [2]: string }
+
+--- @alias morph.HelpProps {
+---   page_keymaps?: morph.HelpKeymap[],
+---   common_keymaps?: morph.HelpKeymap[]
+--- }
+
+--- A reusable help panel showing keybindings in a table
+--- @param ctx morph.Ctx<morph.HelpProps>
+--- @return morph.Tree[]
+function M.Help(ctx)
+  local page_keymaps = ctx.props.page_keymaps or {}
+  local common_keymaps = ctx.props.common_keymaps or {}
+
+  local rows = { { cells = { h.Constant({}, 'KEY'), h.Constant({}, 'ACTION') } } }
+  for _, km in ipairs(page_keymaps) do
+    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
+  end
+  for _, km in ipairs(common_keymaps) do
+    table.insert(rows, { cells = { h.Title({}, km[1]), h.Normal({}, km[2]) } })
+  end
+
+  return {
+    h.RenderMarkdownH1({}, '## Keybindings'),
+    '\n\n',
+    h(M.Table, { rows = rows, header = true, header_separator = true }),
+    '\n',
+  }
 end
 
 return M

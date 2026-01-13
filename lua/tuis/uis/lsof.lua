@@ -1,6 +1,8 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
-local Table = require('tuis.components').Table
+local components = require 'tuis.components'
+local Table = components.Table
+local Help = components.Help
 local utils = require 'tuis.utils'
 
 local M = {}
@@ -77,42 +79,19 @@ end
 -- Help Component
 --------------------------------------------------------------------------------
 
+local HELP_KEYMAPS = {
+  { 'gk', 'Kill process' },
+  { 'g+', 'Yank port to +' },
+  { 'g"', 'Yank port to "' },
+  { 'gi', 'Show full lsof output for PID' },
+  { '<Leader>r', 'Refresh connections' },
+  { 'g?', 'Toggle this help' },
+}
+
 --- @param ctx morph.Ctx<{ show_help: boolean }, any>
-local function Help(ctx)
+local function LsofHelp(ctx)
   if not ctx.props.show_help then return {} end
-
-  local help_table = {}
-
-  table.insert(help_table, {
-    cells = {
-      h.Constant({}, 'KEY'),
-      h.Constant({}, 'ACTION'),
-    },
-  })
-
-  local keymaps = {
-    { 'gk', 'Kill process' },
-    { 'g+', 'Yank port to +' },
-    { 'g"', 'Yank port to "' },
-    { 'gi', 'Show full lsof output for PID' },
-    { '<Leader>r', 'Refresh connections' },
-    { 'g?', 'Toggle this help' },
-  }
-
-  for _, keymap in ipairs(keymaps) do
-    table.insert(help_table, {
-      cells = {
-        h.Title({}, keymap[1]),
-        h.Normal({}, keymap[2]),
-      },
-    })
-  end
-
-  return {
-    h.RenderMarkdownH1({}, '## Keybindings'),
-    '\n\n',
-    h(Table, { rows = help_table, header = true, header_separator = true }),
-  }
+  return h(Help, { common_keymaps = HELP_KEYMAPS })
 end
 
 --------------------------------------------------------------------------------
@@ -225,7 +204,10 @@ local function Connections(ctx)
 
     ctx.props.connections and '\n\n' or '',
 
-    h(Table, { rows = connections_table }),
+    h(Table, {
+      rows = connections_table,
+      page_size = math.max(10, vim.o.lines - 10),
+    }),
   }
 end
 
@@ -299,7 +281,7 @@ local function App(ctx)
     --
     state.show_help
       and {
-        h(Help, {
+        h(LsofHelp, {
           show_help = state.show_help,
         }),
         '\n\n',
