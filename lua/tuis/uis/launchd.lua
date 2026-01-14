@@ -388,8 +388,8 @@ local ServicesView = create_resource_view {
   columns = { 'NAME', 'PID', 'STATUS' },
 
   filter_fn = function(service, filter)
-    if filter == '' then return true end
-    return service.name:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(service.name)
   end,
 
   render_cells = function(service)
@@ -449,8 +449,8 @@ local AgentsView = create_resource_view {
   columns = { 'LABEL', 'PROGRAM', 'PATH' },
 
   filter_fn = function(agent, filter)
-    if filter == '' then return true end
-    return agent.label:find(filter, 1, true) ~= nil or agent.program:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(agent.label) or matches_filter(agent.program)
   end,
 
   render_cells = function(agent)
@@ -499,8 +499,8 @@ local DaemonsView = create_resource_view {
   columns = { 'LABEL', 'PROGRAM', 'PATH' },
 
   filter_fn = function(daemon, filter)
-    if filter == '' then return true end
-    return daemon.label:find(filter, 1, true) ~= nil or daemon.program:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(daemon.label) or matches_filter(daemon.program)
   end,
 
   render_cells = function(daemon)
@@ -557,8 +557,8 @@ local LimitsView = create_resource_view {
   columns = { 'DOMAIN', 'SOFT', 'HARD' },
 
   filter_fn = function(limit, filter)
-    if filter == '' then return true end
-    return limit.domain:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(limit.domain)
   end,
 
   render_cells = function(limit)

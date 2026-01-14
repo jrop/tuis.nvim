@@ -519,14 +519,6 @@ local function create_resource_view(config)
   end
 end
 
---- Simple name-based filter (used by most views)
---- @param item { name: string }
---- @param filter string
---- @return boolean
-local function filter_by_name(item, filter)
-  return filter == '' or item.name:find(filter, 1, true) ~= nil
-end
-
 --------------------------------------------------------------------------------
 -- Pod View
 --------------------------------------------------------------------------------
@@ -534,7 +526,10 @@ end
 local PodsView = create_resource_view {
   title = 'Pods',
   columns = { 'NAME', 'READY', 'STATUS', 'RESTARTS', 'AGE', 'NODE' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(pod)
     local status_cell = pod.status == 'Running' and h.DiagnosticOk({}, pod.status)
@@ -586,7 +581,10 @@ local PodsView = create_resource_view {
 local DeploymentsView = create_resource_view {
   title = 'Deployments',
   columns = { 'NAME', 'READY', 'UP-TO-DATE', 'AVAILABLE', 'AGE' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(dep)
     local available_cell = dep.available > 0 and h.DiagnosticOk({}, tostring(dep.available))
@@ -647,7 +645,10 @@ local DeploymentsView = create_resource_view {
 local ServicesView = create_resource_view {
   title = 'Services',
   columns = { 'NAME', 'TYPE', 'CLUSTER-IP', 'EXTERNAL-IP', 'PORT(S)', 'AGE' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(svc)
     local type_cell = svc.type == 'ClusterIP' and h.String({}, svc.type)
@@ -732,7 +733,10 @@ local ServicesView = create_resource_view {
 local NodesView = create_resource_view {
   title = 'Nodes',
   columns = { 'NAME', 'STATUS', 'ROLES', 'AGE', 'VERSION', 'INTERNAL-IP', 'EXTERNAL-IP' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(node)
     local status_cell = node.status == 'Ready' and h.DiagnosticOk({}, node.status)
@@ -789,11 +793,10 @@ local EventsView = create_resource_view {
   columns = { 'LAST SEEN', 'TYPE', 'REASON', 'OBJECT', 'MESSAGE' },
 
   filter_fn = function(event, filter)
-    if filter == '' then return true end
-    local lower_filter = filter:lower()
-    return event.reason:lower():find(lower_filter, 1, true)
-      or event.object:lower():find(lower_filter, 1, true)
-      or event.message:lower():find(lower_filter, 1, true)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(event.reason)
+      or matches_filter(event.object)
+      or matches_filter(event.message)
   end,
 
   render_cells = function(event)

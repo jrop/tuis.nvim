@@ -502,7 +502,9 @@ local function StoriesView(ctx)
   }
 
   for _, story in ipairs(ctx.props.stories or {}) do
-    if state.filter == '' or story.title:lower():find(state.filter:lower(), 1, true) then
+    local matches_filter = utils.create_filter_fn(state.filter)
+    local passes_filter = matches_filter(story.title)
+    if passes_filter then
       table.insert(rows, {
         nmap = {
           ['<CR>'] = keymap(

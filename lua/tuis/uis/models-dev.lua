@@ -227,14 +227,13 @@ local function App(ctx)
   local state = assert(ctx.state)
 
   -- Filter models
-  local filter_term = vim.trim(state.filter or ''):lower()
+  local matches_filter = utils.create_filter_fn(state.filter)
   local filtered = vim
     .iter(state.models)
     :filter(function(model)
-      if filter_term == '' then return true end
-      return model.name:lower():find(filter_term, 1, true) ~= nil
-        or model.provider:lower():find(filter_term, 1, true) ~= nil
-        or model.id:lower():find(filter_term, 1, true) ~= nil
+      return matches_filter(model.name)
+        or matches_filter(model.provider)
+        or matches_filter(model.id)
     end)
     :totable()
 

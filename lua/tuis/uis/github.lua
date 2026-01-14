@@ -787,7 +787,10 @@ local function ReposList(ctx)
     loading_status = loading_status,
     empty_msg = 'No repositories found. Check your GitHub authentication with `gh auth status`.',
     headers = { 'REPO', 'VIS', 'LANG', 'STARS', 'FORKS', 'UPDATED' },
-    filter_fn = function(r, f) return r.full_name:lower():find(f, 1, true) end,
+    filter_fn = function(r, f)
+      local matches_filter = utils.create_filter_fn(f)
+      return matches_filter(r.full_name)
+    end,
     row_fn = function(repo)
       return {
         nmap = {
@@ -836,7 +839,8 @@ local function IssuesList(ctx)
     empty_msg = 'No open issues. Press gw to view issues in browser.',
     headers = { '#', 'TITLE', 'AUTHOR', 'LABELS', 'COMMENTS', 'UPDATED' },
     filter_fn = function(i, f)
-      return i.title:lower():find(f, 1, true) or tostring(i.number):find(f, 1, true)
+      local matches_filter = utils.create_filter_fn(f)
+      return matches_filter(i.title) or matches_filter(tostring(i.number))
     end,
     row_fn = function(issue)
       return {
@@ -890,9 +894,8 @@ local function PRsList(ctx)
     empty_msg = 'No open PRs. Press gw to view PRs in browser.',
     headers = { '#', 'TITLE', 'AUTHOR', 'BRANCH', 'CHECKS', 'REVIEW', '+/-', 'UPDATED' },
     filter_fn = function(p, f)
-      return p.title:lower():find(f, 1, true)
-        or tostring(p.number):find(f, 1, true)
-        or p.head:lower():find(f, 1, true)
+      local matches_filter = utils.create_filter_fn(f)
+      return matches_filter(p.title) or matches_filter(tostring(p.number)) or matches_filter(p.head)
     end,
     row_fn = function(pr)
       return {
@@ -953,7 +956,8 @@ local function RunsList(ctx)
     empty_msg = 'No workflow runs. Does this repo have GitHub Actions configured?',
     headers = { 'STATUS', 'NAME', 'BRANCH', 'EVENT', 'STARTED' },
     filter_fn = function(r, f)
-      return r.name:lower():find(f, 1, true) or r.branch:lower():find(f, 1, true)
+      local matches_filter = utils.create_filter_fn(f)
+      return matches_filter(r.name) or matches_filter(r.branch)
     end,
     row_fn = function(run)
       local status_text = run.conclusion ~= '' and run.conclusion or run.status

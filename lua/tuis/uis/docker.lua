@@ -715,10 +715,10 @@ local ContainersView = create_resource_view {
   columns = { 'NAME', 'IMAGE', 'ID', 'STATUS', 'PORTS' },
 
   filter_fn = function(container, filter)
-    if filter == '' then return true end
-    return container.name:find(filter, 1, true) ~= nil
-      or container.image:find(filter, 1, true) ~= nil
-      or container.id:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(container.name)
+      or matches_filter(container.image)
+      or matches_filter(container.id)
   end,
 
   render_cells = function(container)
@@ -795,10 +795,10 @@ local ImagesView = create_resource_view {
   columns = { 'REPOSITORY', 'TAG', 'ID', 'CREATED', 'SIZE' },
 
   filter_fn = function(image, filter)
-    if filter == '' then return true end
-    return image.repository:find(filter, 1, true) ~= nil
-      or image.tag:find(filter, 1, true) ~= nil
-      or image.id:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(image.repository)
+      or matches_filter(image.tag)
+      or matches_filter(image.id)
   end,
 
   render_cells = function(image)
@@ -885,8 +885,8 @@ local VolumesView = create_resource_view {
   columns = { 'NAME', 'DRIVER', 'MOUNTPOINT' },
 
   filter_fn = function(volume, filter)
-    if filter == '' then return true end
-    return volume.name:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(volume.name)
   end,
 
   render_cells = function(volume)
@@ -926,8 +926,8 @@ local NetworksView = create_resource_view {
   columns = { 'NAME', 'ID', 'DRIVER', 'SCOPE' },
 
   filter_fn = function(network, filter)
-    if filter == '' then return true end
-    return network.name:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(network.name)
   end,
 
   render_cells = function(network)
@@ -986,8 +986,8 @@ local StatsView = create_resource_view {
   columns = { 'NAME', 'CPU', 'MEMORY', 'NET I/O', 'BLOCK I/O', 'PIDS' },
 
   filter_fn = function(stat, filter)
-    if filter == '' then return true end
-    return stat.name:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(stat.name)
   end,
 
   render_cells = function(stat)
@@ -1035,8 +1035,8 @@ local ComposeView = create_resource_view {
   columns = { 'PROJECT', 'STATUS', 'CONFIG FILES' },
 
   filter_fn = function(project, filter)
-    if filter == '' then return true end
-    return project.name:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(project.name)
   end,
 
   render_cells = function(project)
@@ -1182,8 +1182,8 @@ local ContextsView = create_resource_view {
   columns = { 'NAME', 'DESCRIPTION', 'ENDPOINT', 'STATUS' },
 
   filter_fn = function(context, filter)
-    if filter == '' then return true end
-    return context.name:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(context.name)
   end,
 
   render_cells = function(context)

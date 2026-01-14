@@ -375,8 +375,8 @@ local ServicesView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'LOADED', 'ACTIVE', 'SUB' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil or unit.description:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit) or matches_filter(unit.description)
   end,
 
   render_cells = function(unit)
@@ -428,8 +428,8 @@ local TimersView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'NEXT', 'LAST', 'TRIGGERED BY' },
 
   filter_fn = function(timer, filter)
-    if filter == '' then return true end
-    return timer.unit:find(filter, 1, true) ~= nil or timer.description:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(timer.unit) or matches_filter(timer.description)
   end,
 
   render_cells = function(timer)
@@ -472,8 +472,8 @@ local SocketsView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB', 'LISTEN' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)
@@ -516,8 +516,8 @@ local PathsView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)
@@ -554,8 +554,8 @@ local MountsView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB', 'WHERE' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)
@@ -594,8 +594,8 @@ local TargetsView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)
@@ -628,8 +628,8 @@ local SlicesView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB', 'MEMORY' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)
@@ -659,8 +659,8 @@ local ScopesView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB', 'PID' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)
@@ -696,8 +696,8 @@ local DevicesView = create_resource_view {
   columns = { 'UNIT', 'DESCRIPTION', 'ACTIVE', 'SUB' },
 
   filter_fn = function(unit, filter)
-    if filter == '' then return true end
-    return unit.unit:find(filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(unit.unit)
   end,
 
   render_cells = function(unit)

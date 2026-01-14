@@ -416,7 +416,8 @@ local function ItemsView(ctx)
 
   for _, item in ipairs(ctx.props.items or {}) do
     -- Apply filters
-    local passes_text = state.filter == '' or item.name:lower():find(state.filter:lower(), 1, true)
+    local matches_filter = utils.create_filter_fn(state.filter)
+    local passes_text = matches_filter(item.name)
     local passes_type = state.type_filter == nil or item.type == state.type_filter
     local passes_folder = state.folder_filter == nil or item.folderId == state.folder_filter
 
@@ -649,8 +650,9 @@ local function FoldersView(ctx)
     },
   }
 
-  -- Add "No Folder" entry
-  if state.filter == '' or ('no folder'):find(state.filter:lower(), 1, true) then
+  local matches_filter = utils.create_filter_fn(state.filter)
+  local no_folder_filter_match = matches_filter('no folder')
+  if no_folder_filter_match then
     table.insert(rows, {
       nmap = {
         ['<CR>'] = keymap(function() ctx.props.on_filter_folder '' end),
@@ -660,10 +662,12 @@ local function FoldersView(ctx)
         h.Number({}, tostring(no_folder_count)),
       },
     })
-  end
+   end
 
   for _, folder in ipairs(ctx.props.folders or {}) do
-    if state.filter == '' or folder.name:lower():find(state.filter:lower(), 1, true) then
+    local matches_filter = utils.create_filter_fn(state.filter)
+    local folder_filter_match = matches_filter(folder.name)
+    if folder_filter_match then
       local count = folder_counts[folder.id] or 0
       table.insert(rows, {
         nmap = {
@@ -736,7 +740,9 @@ local function OrganizationsView(ctx)
   }
 
   for _, org in ipairs(ctx.props.organizations or {}) do
-    if state.filter == '' or org.name:lower():find(state.filter:lower(), 1, true) then
+    local matches_filter = utils.create_filter_fn(state.filter)
+    local org_filter_match = matches_filter(org.name)
+    if org_filter_match then
       local status_name = status_names[org.status] or 'Unknown'
       table.insert(rows, {
         nmap = {

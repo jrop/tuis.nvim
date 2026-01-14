@@ -332,14 +332,6 @@ local function create_resource_view(config)
   end
 end
 
---- Simple name-based filter
---- @param item { name: string }
---- @param filter string
---- @return boolean
-local function filter_by_name(item, filter)
-  return filter == '' or item.name:find(filter, 1, true) ~= nil
-end
-
 --------------------------------------------------------------------------------
 -- EC2 Instances View
 --------------------------------------------------------------------------------
@@ -347,7 +339,10 @@ end
 local InstancesView = create_resource_view {
   title = 'EC2 Instances',
   columns = { 'NAME', 'ID', 'TYPE', 'STATE', 'PUBLIC IP' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(instance)
     local state_cell = instance.state == 'running' and h.DiagnosticOk({}, instance.state)
@@ -410,7 +405,10 @@ local InstancesView = create_resource_view {
 local LambdasView = create_resource_view {
   title = 'Lambda Functions',
   columns = { 'NAME', 'RUNTIME', 'MEMORY', 'TIMEOUT' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(lambda)
     return {
@@ -461,7 +459,10 @@ local LambdasView = create_resource_view {
 local AutoScalingGroupsView = create_resource_view {
   title = 'Auto Scaling Groups',
   columns = { 'NAME', 'MIN/DESIRED/MAX', 'LAUNCH CONFIG', 'INSTANCES' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(group)
     local instances_cell = group.instances == 0 and h.DiagnosticError({}, 'No instances')

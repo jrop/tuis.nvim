@@ -117,10 +117,10 @@ local function Connections(ctx)
   })
 
   for _, conn in ipairs(ctx.props.connections) do
-    local passes_filter = state.filter == ''
-      or conn.command:lower():find(state.filter:lower(), 1, true) ~= nil
-      or conn.name:find(state.filter, 1, true) ~= nil
-      or tostring(conn.pid):find(state.filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(state.filter)
+    local passes_filter = matches_filter(conn.command)
+      or matches_filter(conn.name)
+      or matches_filter(tostring(conn.pid))
 
     if passes_filter then
       table.insert(connections_table, {

@@ -316,14 +316,6 @@ local function create_resource_view(config)
   end
 end
 
---- Simple name-based filter
---- @param item { name: string }
---- @param filter string
---- @return boolean
-local function filter_by_name(item, filter)
-  return filter == '' or item.name:find(filter, 1, true) ~= nil
-end
-
 --------------------------------------------------------------------------------
 -- Compute Instances View
 --------------------------------------------------------------------------------
@@ -331,7 +323,10 @@ end
 local InstancesView = create_resource_view {
   title = 'Compute Instances',
   columns = { 'NAME', 'ZONE', 'CREATED', 'STATUS' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(instance)
     local status_cell = instance.status == 'RUNNING' and h.DiagnosticOk({}, instance.status)
@@ -409,7 +404,10 @@ local InstancesView = create_resource_view {
 local InstanceGroupsView = create_resource_view {
   title = 'Managed Instance Groups',
   columns = { 'NAME', 'SIZE', 'TEMPLATE', 'STATUS' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(group)
     local status_cell = group.status == 'STABLE' and h.DiagnosticOk({}, group.status)
@@ -448,7 +446,10 @@ local InstanceGroupsView = create_resource_view {
 local SecretsView = create_resource_view {
   title = 'Secrets',
   columns = { 'NAME', 'CREATED', 'UPDATED', 'REPLICATION' },
-  filter_fn = filter_by_name,
+  filter_fn = function(item, filter)
+    local matches_filter = utils.create_filter_fn(filter)
+    return matches_filter(item.name)
+  end,
 
   render_cells = function(secret)
     return {

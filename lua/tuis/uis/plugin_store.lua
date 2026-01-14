@@ -781,14 +781,14 @@ local function BrowseView(ctx)
   for _, category in ipairs(ctx.props.categories) do
     -- Filter plugins within category
     local visible_plugins = {}
+    local matches_filter = utils.create_filter_fn(filter_lower)
     for _, plugin in ipairs(category.plugins) do
       plugin.installed = ctx.props.installed[plugin.repo] or false
 
-      local matches_filter = state.filter == ''
-        or plugin.full_name:lower():find(filter_lower, 1, true)
-        or (plugin.description and plugin.description:lower():find(filter_lower, 1, true))
+      local passes = matches_filter(plugin.full_name)
+        or (plugin.description and matches_filter(plugin.description))
 
-      if matches_filter then table.insert(visible_plugins, plugin) end
+      if passes then table.insert(visible_plugins, plugin) end
     end
 
     -- Show category if it has matching plugins or no filter is active

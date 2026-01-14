@@ -3,6 +3,7 @@ local h = Morph.h
 local components = require 'tuis.components'
 local Table = components.Table
 local Help = components.Help
+local utils = require 'tuis.utils'
 
 local M = {}
 
@@ -101,7 +102,8 @@ local function LspClients(ctx)
   })
 
   for _, client in ipairs(ctx.props.clients) do
-    local passes_filter = state.filter == '' or client.name:find(state.filter, 1, true) ~= nil
+    local matches_filter = utils.create_filter_fn(state.filter)
+    local passes_filter = matches_filter(client.name)
     if passes_filter then
       table.insert(clients_h_table, {
         nmap = {

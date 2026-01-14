@@ -55,4 +55,26 @@ function M.check_clis_available(clis, silent)
   return #missing == 0
 end
 
+--------------------------------------------------------------------------------
+-- Filter
+--------------------------------------------------------------------------------
+
+--- Create a filter function that supports regex patterns
+--- Falls back to plain string matching if the pattern is invalid regex
+--- @param filter_term string
+--- @return fun(text: string): boolean
+function M.create_filter_fn(filter_term)
+  filter_term = filter_term or ''
+  local filter_re_ok, filter_re = pcall(vim.regex, filter_term)
+
+  return function(text)
+    if filter_term == '' then return true end
+    if filter_re_ok then
+      return filter_re:match_str(text) ~= nil
+    else
+      return text:find(filter_term, 1) ~= nil
+    end
+  end
+end
+
 return M
