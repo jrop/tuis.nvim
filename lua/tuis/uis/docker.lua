@@ -796,9 +796,7 @@ local ImagesView = create_resource_view {
 
   filter_fn = function(image, filter)
     local matches_filter = utils.create_filter_fn(filter)
-    return matches_filter(image.repository)
-      or matches_filter(image.tag)
-      or matches_filter(image.id)
+    return matches_filter(image.repository) or matches_filter(image.tag) or matches_filter(image.id)
   end,
 
   render_cells = function(image)

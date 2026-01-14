@@ -659,9 +659,7 @@ local function ProcessesPanel(ctx)
   local matches_filter = utils.create_filter_fn(filter_term)
   local filtered_processes = vim
     .iter(state.processes)
-    :filter(function(proc)
-      return matches_filter(proc.user) or matches_filter(proc.command)
-    end)
+    :filter(function(proc) return matches_filter(proc.user) or matches_filter(proc.command) end)
     :totable()
 
   if state.sort_by then

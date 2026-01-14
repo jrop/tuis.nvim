@@ -651,7 +651,7 @@ local function FoldersView(ctx)
   }
 
   local matches_filter = utils.create_filter_fn(state.filter)
-  local no_folder_filter_match = matches_filter('no folder')
+  local no_folder_filter_match = matches_filter 'no folder'
   if no_folder_filter_match then
     table.insert(rows, {
       nmap = {
@@ -662,7 +662,7 @@ local function FoldersView(ctx)
         h.Number({}, tostring(no_folder_count)),
       },
     })
-   end
+  end
 
   for _, folder in ipairs(ctx.props.folders or {}) do
     local matches_filter = utils.create_filter_fn(state.filter)

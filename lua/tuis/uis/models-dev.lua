@@ -230,11 +230,13 @@ local function App(ctx)
   local matches_filter = utils.create_filter_fn(state.filter)
   local filtered = vim
     .iter(state.models)
-    :filter(function(model)
-      return matches_filter(model.name)
-        or matches_filter(model.provider)
-        or matches_filter(model.id)
-    end)
+    :filter(
+      function(model)
+        return matches_filter(model.name)
+          or matches_filter(model.provider)
+          or matches_filter(model.id)
+      end
+    )
     :totable()
 
   -- Build table rows
