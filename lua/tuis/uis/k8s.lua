@@ -902,8 +902,9 @@ local function App(ctx)
       ctx:update(state)
     end
 
+    local page = assert(state.page)
     --- @type k8s.PageConfig
-    local config = PAGE_CONFIGS[state.page]
+    local config = assert(PAGE_CONFIGS[page])
     local function on_data(items)
       state[config.state_key] = items
       state.loading = false
@@ -953,8 +954,8 @@ local function App(ctx)
 
   -- Cleanup timer on unmount
   if ctx.phase == 'unmount' then
-    state.timer:stop()
-    state.timer:close()
+    assert(state.timer):stop()
+    assert(state.timer):close()
   end
 
   -- Build navigation keymaps programmatically
@@ -974,10 +975,8 @@ local function App(ctx)
   end
 
   -- Render current page
-  --- @cast state.page k8s.Page
-  local page = state.page
   --- @type k8s.PageConfig
-  local config = PAGE_CONFIGS[page]
+  local config = assert(PAGE_CONFIGS[state.page])
   local page_content = h(config.view, {
     items = state[config.state_key],
     loading = state.loading,

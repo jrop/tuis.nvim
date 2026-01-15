@@ -252,8 +252,8 @@ local function App(ctx)
   local state = assert(ctx.state)
 
   if ctx.phase == 'unmount' then
-    state.timer:stop()
-    state.timer:close()
+    assert(state.timer):stop()
+    assert(state.timer):close()
   end
 
   return h('text', {

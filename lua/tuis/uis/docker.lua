@@ -147,9 +147,9 @@ local function show_inspect(type, id)
 end
 
 --- Ask for confirmation before running a dangerous action
---- @param prompt string
+--- @param _prompt string
 --- @param on_confirm fun()
-local function confirm_action(prompt, on_confirm)
+local function confirm_action(_prompt, on_confirm)
   local choice = vim.fn.confirm('Are you sure?', '&Yes\n&No', 2)
   if choice == 1 then vim.schedule(on_confirm) end
 end
@@ -1015,7 +1015,7 @@ local StatsView = create_resource_view {
     }
   end,
 
-  keymaps = function(stat, on_refresh)
+  keymaps = function(stat, _on_refresh)
     return {
       ['gi'] = keymap(function() show_inspect('container', stat.id) end),
       ['gl'] = keymap(function() term.open('docker logs --since 5m -f ' .. stat.id) end),
@@ -1046,7 +1046,7 @@ local ComposeView = create_resource_view {
     }
   end,
 
-  keymaps = function(project, on_refresh)
+  keymaps = function(project, _on_refresh)
     return {
       ['gi'] = keymap(function()
         vim.schedule(function()
@@ -1516,7 +1516,8 @@ local function App(ctx)
       ctx:update(state)
     end
 
-    local config = PAGE_CONFIGS[state.page]
+    local page = assert(state.page)
+    local config = assert(PAGE_CONFIGS[page])
     if config.custom and state.page == 'system' then
       -- System page returns two values: disk_usage and info
       config.fetch(function(disk_usage, info)
@@ -1525,7 +1526,7 @@ local function App(ctx)
         state.loading = false
         ctx:update(state)
       end)
-    elseif state.page == 'contexts' then
+    elseif page == 'contexts' then
       -- Contexts page also updates header context display
       config.fetch(function(items)
         state[config.state_key] = items
@@ -1533,7 +1534,7 @@ local function App(ctx)
         state.loading = false
         ctx:update(state)
       end)
-    elseif state.page == 'hub' then
+    elseif page == 'hub' then
       state.loading = false
       ctx:update(state)
     else
@@ -1591,10 +1592,9 @@ local function App(ctx)
   end
 
   local state = assert(ctx.state)
-
   if ctx.phase == 'unmount' then
-    state.timer:stop()
-    state.timer:close()
+    assert(state.timer):stop()
+    assert(state.timer):close()
   end
 
   -- Build navigation keymaps
@@ -1614,9 +1614,10 @@ local function App(ctx)
   end
 
   -- Render current page
-  local config = PAGE_CONFIGS[state.page]
+  local page = assert(state.page)
+  local config = assert(PAGE_CONFIGS[page])
   local page_content
-  if config.custom and state.page == 'system' then
+  if config.custom and page == 'system' then
     page_content = h(config.view, {
       disk_usage = state.disk_usage,
       info = state.system_info,

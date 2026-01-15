@@ -15,13 +15,11 @@ local function with_buf(lines, f)
   vim.cmd.bdelete { bang = true }
   if not ok then error(result) end
 end
-
 describe('Morph-UI Components', function()
-  --  __  __      _
-  -- |  \/  | ___| |_ ___ _ __
-  -- | |\/| |/ _ \ __/ _ \ '__|
-  -- | |  | |  __/ ||  __/ |
-  -- |_|  |_|\___|\__\___|_|
+  --------------------------------------------------------------------------------
+  -- Meter
+  --------------------------------------------------------------------------------
+
   describe('Meter', function()
     it('should render an empty meter when value is 0', function()
       with_buf({}, function()
@@ -158,12 +156,10 @@ describe('Morph-UI Components', function()
     end)
   end)
 
-  --  ____                   _    _ _
-  -- / ___| _ __   __ _ _ __| | _| (_)_ __   ___
-  -- \___ \| '_ \ / _` | '__| |/ / | | '_ \ / _ \
-  --  ___) | |_) | (_| | |  |   <| | | | | |  __/
-  -- |____/| .__/ \__,_|_|  |_|\_\_|_|_| |_|\___|
-  --       |_|
+  --------------------------------------------------------------------------------
+  -- Sparkline
+  --------------------------------------------------------------------------------
+
   describe('Sparkline', function()
     it('should render empty sparkline for empty values', function()
       with_buf({}, function()
@@ -290,11 +286,10 @@ describe('Morph-UI Components', function()
     end)
   end)
 
-  --  _____     _     _
-  -- |_   _|_ _| |__ | | ___
-  --   | |/ _` | '_ \| |/ _ \
-  --   | | (_| | |_) | |  __/
-  --   |_|\__,_|_.__/|_|\___|
+  --------------------------------------------------------------------------------
+  -- Table
+  --------------------------------------------------------------------------------
+
   describe('Table', function()
     it('should render a simple table with aligned columns', function()
       with_buf({}, function()
@@ -1040,10 +1035,10 @@ describe('Morph-UI Components', function()
     end)
   end)
 
-  --  _____     _     _         _   _  __ _
-  -- |_   _|_ _| |__ | | ___   | | | |/ _` |
-  --   | |/ _` | '_ \| |/ _ \  | | | | (_| |
-  --   |_|\__,_|_.__/|_|\___|  |_| |_|\__,_|
+  --------------------------------------------------------------------------------
+  -- TabBar
+  --------------------------------------------------------------------------------
+
   describe('TabBar', function()
     local tabs = {
       { key = 'g1', page = 'containers', label = 'Containers' },
@@ -1077,9 +1072,6 @@ describe('Morph-UI Components', function()
       with_buf({}, function()
         local r = Morph.new(0)
         r:mount(h(TabBar, { tabs = tabs, active_page = 'images' }))
-
-        local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-        local text = table.concat(lines, '\n')
 
         -- Active tab should be highlighted with H2Bg
         -- The inactive tabs use H2, active uses H2Bg

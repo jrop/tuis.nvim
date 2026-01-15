@@ -1022,8 +1022,8 @@ local function App(ctx)
   local state = assert(ctx.state)
 
   if ctx.phase == 'unmount' then
-    state.timer:stop()
-    state.timer:close()
+    assert(state.timer):stop()
+    assert(state.timer):close()
   end
 
   -- Build navigation keymaps
@@ -1072,7 +1072,7 @@ local function App(ctx)
       folders = state.folders,
       items = state.items,
       loading = state.loading,
-      on_filter_folder = function(folder_id)
+      on_filter_folder = function(_folder_id)
         -- Switch to items page with folder filter
         state.page = 'items'
         ctx:update(state)

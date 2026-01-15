@@ -6,7 +6,6 @@ local TabBar = components.TabBar
 local Help = components.Help
 local term = require 'tuis.term'
 local utils = require 'tuis.utils'
-local keymap = utils.keymap
 
 local M = {}
 
@@ -649,9 +648,9 @@ local HELP_KEYMAPS = {
 }
 
 --- Help component
---- @param ctx morph.Ctx<{}>
+--- @param _ctx morph.Ctx
 --- @return morph.Tree[]
-local function GithubHelp(ctx) return h(Help, { common_keymaps = HELP_KEYMAPS }) end
+local function GithubHelp(_ctx) return h(Help, { common_keymaps = HELP_KEYMAPS }) end
 
 --- Breadcrumb component for detail views
 --- @param ctx morph.Ctx<{ page: gh.Page, repo: string|nil, selected_pr: number|nil, selected_issue: number|nil, selected_run: number|nil, on_back: fun() }>
@@ -1420,7 +1419,8 @@ local function App(ctx)
       return
     end
 
-    local config = PAGE_CONFIG[state.page]
+    local page = assert(state.page)
+    local config = assert(PAGE_CONFIG[page])
     if not config then return end
 
     local has_data = state[config.field]
@@ -1519,7 +1519,8 @@ local function App(ctx)
   end
 
   -- Render page content using config
-  local config = PAGE_CONFIG[state.page]
+  local page = assert(state.page)
+  local config = assert(PAGE_CONFIG[page])
   local page_content = config
       and h(
         config.component,

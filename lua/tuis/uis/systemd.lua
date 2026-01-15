@@ -647,7 +647,7 @@ local SlicesView = create_resource_view {
     }
   end,
 
-  keymaps = function(unit, on_refresh, namespace)
+  keymaps = function(unit, _on_refresh, namespace)
     return {
       ['gi'] = keymap(function() show_inspect(namespace, unit.unit) end),
     }
@@ -713,7 +713,7 @@ local DevicesView = create_resource_view {
     }
   end,
 
-  keymaps = function(unit, on_refresh, namespace)
+  keymaps = function(unit, _on_refresh, namespace)
     return {
       ['gi'] = keymap(function() show_inspect(namespace, unit.unit) end),
     }
@@ -786,7 +786,7 @@ local function App(ctx)
       ctx:update(state)
     end
 
-    local config = PAGE_CONFIGS[state.page]
+    local config = assert(PAGE_CONFIGS[state.page])
 
     local fetch_fn = state.namespace == 'user'
         and function(cb)
@@ -868,7 +868,8 @@ local function App(ctx)
     end)
   end
 
-  local config = PAGE_CONFIGS[state.page]
+  local page = assert(state.page)
+  local config = assert(PAGE_CONFIGS[page])
   local current_items = state[config.state_key] or {}
 
   local page_view = h(config.view, {

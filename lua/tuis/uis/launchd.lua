@@ -240,7 +240,7 @@ local function fetch_agents(namespace, callback)
 end
 
 --- @param callback fun(daemons: morphui.launchd.DaemonInfo[])
-local function fetch_daemons(namespace, callback)
+local function fetch_daemons(_namespace, callback)
   local base_dir = '/Library/LaunchDaemons/'
 
   vim.system(
@@ -312,7 +312,7 @@ local function fetch_daemons(namespace, callback)
 end
 
 --- @param callback fun(limits: morphui.launchd.LimitInfo[])
-local function fetch_limits(namespace, callback)
+local function fetch_limits(_namespace, callback)
   run(
     { 'launchctl', 'limit' },
     { text = true },
@@ -461,7 +461,7 @@ local AgentsView = create_resource_view {
     }
   end,
 
-  keymaps = function(agent, on_refresh, namespace)
+  keymaps = function(agent, on_refresh, _namespace)
     return {
       ['gi'] = keymap(function()
         vim.cmd.vnew()
@@ -511,7 +511,7 @@ local DaemonsView = create_resource_view {
     }
   end,
 
-  keymaps = function(daemon, on_refresh, namespace)
+  keymaps = function(daemon, on_refresh, _namespace)
     return {
       ['gi'] = keymap(function()
         vim.cmd.vnew()
@@ -649,7 +649,8 @@ local function App(ctx)
       ctx:update(state)
     end
 
-    local config = PAGE_CONFIGS[state.page]
+    local page = assert(state.page)
+    local config = assert(PAGE_CONFIGS[page])
     config.fetch(state.namespace, function(items)
       state[config.state_key] = items
       state.loading = false
@@ -709,7 +710,8 @@ local function App(ctx)
     end)
   end
 
-  local config = PAGE_CONFIGS[state.page]
+  local page = assert(state.page)
+  local config = assert(PAGE_CONFIGS[page])
   local current_items = state[config.state_key] or {}
 
   local page_view = h(config.view, {

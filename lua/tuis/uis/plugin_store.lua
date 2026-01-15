@@ -1,11 +1,9 @@
 local Morph = require 'tuis.morph'
 local h = Morph.h
 local components = require 'tuis.components'
-local Table = components.Table
 local TabBar = components.TabBar
 local Help = components.Help
 local utils = require 'tuis.utils'
-local keymap = utils.keymap
 
 local M = {}
 
@@ -170,7 +168,7 @@ local function format_relative_time(iso_date)
   if seconds_ago < 0 then return 'just now' end
 
   -- Time thresholds in seconds
-  local MINUTE, HOUR, DAY, WEEK, MONTH, YEAR = 60, 3600, 86400, 604800, 2592000, 31536000
+  local DAY, WEEK, MONTH, YEAR = 86400, 604800, 2592000, 31536000
 
   if seconds_ago < DAY then return 'today' end
   if seconds_ago < WEEK then return math.floor(seconds_ago / DAY) .. 'd ago' end
@@ -691,8 +689,8 @@ local HELP_KEYMAPS = {
   { 'g?', 'Toggle help' },
 }
 
---- @param ctx morph.Ctx<{}>
-local function PluginStoreHelp(ctx) return h(Help, { common_keymaps = HELP_KEYMAPS }) end
+--- @param _ctx morph.Ctx
+local function PluginStoreHelp(_ctx) return h(Help, { common_keymaps = HELP_KEYMAPS }) end
 
 --------------------------------------------------------------------------------
 -- UI Components: Navigation Tabs
@@ -748,13 +746,8 @@ end
 --- @param ctx morph.Ctx<{ categories: ps.Category[], installed: table<string, boolean>, loading: boolean, on_select: fun(p: ps.Plugin), on_install: fun(p: ps.Plugin), on_update: fun(p: ps.Plugin), on_remove: fun(p: ps.Plugin), on_toggle_category: fun(slug: string) }, ps.BrowseState>
 local function BrowseView(ctx)
   -- Initialize state on mount, or ensure defaults exist for re-renders
-  if ctx.phase == 'mount' then
-    ctx.state = { filter = '' }
-  else
-    ctx.state = ctx.state or {}
-    ctx.state.filter = ctx.state.filter or ''
-  end
-  local state = ctx.state
+  if ctx.phase == 'mount' then ctx.state = { filter = '' } end
+  local state = assert(ctx.state)
   local filter_lower = state.filter:lower()
 
   -- Header
@@ -1000,7 +993,7 @@ local function InstalledView(ctx)
     end
   end
 
-  local state = ctx.state
+  local state = assert(ctx.state)
 
   local content = {
     h.RenderMarkdownH1({}, '# Plugin Store - Installed'),

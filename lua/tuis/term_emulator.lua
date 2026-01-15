@@ -32,7 +32,7 @@ local function detect_terminal()
   end
 end
 
---- @class TerminalInfo
+--- @class tuis.term_emulator.TerminalInfo
 --- @field terminal string The detected terminal type ('tmux', 'wezterm', 'ghostty', 'unknown')
 --- @field is_wsl2 boolean Whether running in WSL2
 --- @field is_tmux boolean Whether running in TMUX
@@ -40,7 +40,7 @@ end
 --- @field is_ghostty boolean Whether running in Ghostty
 --- @field wezterm_path string Path to WezTerm executable
 
---- @class Emulator
+--- @class tuis.term_emulator.Emulator
 --- @field name string
 local Emulator = {}
 M.Emulator = Emulator
@@ -48,7 +48,7 @@ Emulator.__index = Emulator
 
 --- Get emulator instance by kind, or currently detected if kind is nil
 --- @param kind string?
---- @return Emulator?
+--- @return tuis.term_emulator.Emulator?
 function Emulator.get(kind)
   kind = kind or detect_terminal()
 
@@ -64,7 +64,7 @@ function Emulator.get(kind)
 end
 
 --- @param name string
---- @return Emulator
+--- @return tuis.term_emulator.Emulator
 function Emulator:new(name) return setmetatable({ name = name }, self) end
 
 --- @param _program string?
@@ -93,7 +93,7 @@ end
 -- WezTerm
 --------------------------------------------------------------------------------
 
---- @class WezTerm : Emulator
+--- @class tuis.term_emulator.WezTerm : tuis.term_emulator.Emulator
 local WezTerm = setmetatable({}, { __index = Emulator })
 M.WezTerm = WezTerm
 WezTerm.__index = WezTerm
@@ -107,7 +107,7 @@ function WezTerm.get_wezterm_path()
   end
 end
 
---- @return WezTerm
+--- @return tuis.term_emulator.WezTerm
 function WezTerm:new() return setmetatable(Emulator.new(self, 'wezterm'), self) end
 
 --- @param program string?
@@ -174,12 +174,12 @@ end
 -- Tmux
 --------------------------------------------------------------------------------
 
---- @class Tmux : Emulator
+--- @class tuis.term_emulator.Tmux : tuis.term_emulator.Emulator
 local Tmux = setmetatable({}, { __index = Emulator })
 M.Tmux = Tmux
 Tmux.__index = Tmux
 
---- @return Tmux
+--- @return tuis.term_emulator.Tmux
 function Tmux:new() return setmetatable(Emulator.new(self, 'tmux'), self) end
 
 --- @param program string?
@@ -213,12 +213,12 @@ end
 -- Ghostty
 --------------------------------------------------------------------------------
 
---- @class Ghostty : Emulator
+--- @class tuis.term_emulator.Ghostty : tuis.term_emulator.Emulator
 local Ghostty = setmetatable({}, { __index = Emulator })
 M.Ghostty = Ghostty
 Ghostty.__index = Ghostty
 
---- @return Ghostty
+--- @return tuis.term_emulator.Ghostty
 function Ghostty:new() return setmetatable(Emulator.new(self, 'ghostty'), self) end
 
 --- @param program string?
@@ -326,7 +326,7 @@ function M.new_tab(program, emulator)
 end
 
 --- Get the currently detected emulator instance
---- @return Emulator?
+--- @return tuis.term_emulator.Emulator?
 function M.current() return Emulator.get() end
 
 return M

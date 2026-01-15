@@ -19,8 +19,8 @@ _.source = { path = "./scripts/env.sh", tools = true }
 
 [tasks]
 lint = "emmylua_check ."
-fmt = "stylua ."
-"fmt:check" = "stylua --check ."
+fmt = "stylua --verbose ."
+"fmt:check" = "stylua --verbose --check ."
 
 [tasks."test"]
 hide = true
@@ -34,5 +34,6 @@ busted --verbose
 [tasks."ci"]
 run = '''
 mise run fmt:check
+mise run lint
 mise run test
 '''

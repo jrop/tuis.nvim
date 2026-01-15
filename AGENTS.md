@@ -2,6 +2,21 @@
 
 This document outlines the standard pattern for creating UI modules in the tuis.nvim plugin.
 
+## Runtime
+
+Target LuaJIT in Neovim. DO NOT use goto, EVER.
+
+
+## Build/Lint/Test Commands
+
+- `mise run ci` - Run lint, format check, and tests
+- `mise run lint` - Typecheck with emmylua_check
+- `mise run fmt` - Format code with stylua
+- `mise run fmt:check` - Check code formatting
+- `mise run test` - Run tests with busted
+
+**Single test**: Use busted directly: `busted --verbose --filter='"<FULL TEST NAME HERE>"'`
+
 ## UI Module Structure
 
 All UI modules should be located in `lua/tuis/uis/` and follow this pattern:
@@ -87,6 +102,30 @@ To migrate an existing UI file:
 4. Add `M.is_enabled()` function with appropriate checks
 5. Add `return M` at the end
 6. Remove any early returns based on CLI availability (let `M.is_enabled()` handle this)
+
+
+### Testing Neovim Behaviors Interactively
+
+When you need to quickly test Neovim behaviors outside of the formal test suite:
+
+1. **Create a test script**: Create a standalone `.lua` file (e.g., `test_behavior.lua`) in the project root
+2. **Write the test**: Use standard Lua and Neovim API calls. The script should end with `vim.cmd.qall { bang = true }` to exit
+3. **Run the test**: Execute with `nvim --headless -u NONE -c "set rtp+=." -c "luafile test_behavior.lua" 2>&1`
+   - `--headless`: Run without UI
+   - `-u NONE`: Don't load user config
+   - `-c "set rtp+=."`: Add current directory to runtime path so `require 'morph'` works
+   - `-c "luafile test_behavior.lua"`: Execute your test script
+   - `2>&1`: Capture all output
+4. **Clean up**: Delete test files when done (they should not be committed)
+
+**Example test script**:
+```lua
+#!/usr/bin/env nvim -l
+-- Your test code here
+vim.cmd.qall { bang = true }
+```
+
+**Note**: Interactive nvim commands with input (like `nvim --headless -c "..."` where commands expect user input) will hang. Always use non-interactive commands or scripts.
 
 ## Examples
 

@@ -551,8 +551,9 @@ local function App(ctx)
     state.loading = true
     ctx:update(state)
 
+    local page = assert(state.page)
     --- @type aws.PageConfig
-    local config = PAGE_CONFIGS[state.page]
+    local config = assert(PAGE_CONFIGS[page])
     config.fetch(state.region, function(items)
       state[config.state_key] = items
       state.loading = false
@@ -600,10 +601,10 @@ local function App(ctx)
   end
 
   -- Render current page
-  --- @cast state.page aws.Page
-  local page = state.page
+  local page = assert(state.page)
+  --- @cast page aws.Page
   --- @type aws.PageConfig
-  local config = PAGE_CONFIGS[page]
+  local config = assert(PAGE_CONFIGS[page])
   local page_content = h(config.view, {
     items = state[config.state_key],
     loading = state.loading,

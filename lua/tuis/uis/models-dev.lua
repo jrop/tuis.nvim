@@ -172,9 +172,9 @@ local COMMON_KEYMAPS = {
   { 'g?', 'Toggle help' },
 }
 
---- @param ctx morph.Ctx<{}>
+--- @param _ctx morph.Ctx
 --- @return morph.Tree[]
-local function ModelsHelp(ctx)
+local function ModelsHelp(_ctx)
   return {
     h(Help, { page_keymaps = PAGE_KEYMAPS, common_keymaps = COMMON_KEYMAPS }),
     '\n',

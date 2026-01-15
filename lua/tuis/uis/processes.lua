@@ -7,11 +7,10 @@ local Sparkline = components.Sparkline
 local TabBar = components.TabBar
 local Help = components.Help
 local utils = require 'tuis.utils'
-local keymap = utils.keymap
 
 local M = {}
 
-local platform = vim.loop.os_uname().sysname
+local platform = vim.uv.os_uname().sysname
 local is_macos = platform == 'Darwin'
 local is_linux = platform == 'Linux'
 
@@ -107,40 +106,67 @@ local function fetch_cpu_stats(callback)
       end)
     end)
   elseif is_linux then
-    local file = io.open('/proc/stat', 'r')
-    if not file then
-      callback { overall = 0, cores = {} }
-      return
+    local function read_cpu_stats()
+      local file = io.open('/proc/stat', 'r')
+      local content = file:read '*a'
+      file:close()
+
+      -- The /proc/stat file is arranged in `LABEL VALUE [VALUE...]` lines
+      --- @type table<string, number[]>
+      local proc_stat = vim.tbl_extend(
+        'force',
+        unpack(vim
+          .iter(vim.split(content, '\n'))
+          :filter(function(line) return vim.trim(line) ~= '' end)
+          :map(function(line)
+            local values = vim.iter(line:gmatch '%S+'):totable()
+            local label = table.remove(values, 1)
+            if not vim.startswith(label, 'cpu') then return {} end
+            return {
+              -- convert each value to a number:
+              [label] = vim.iter(values):map(function(v) return tonumber(v) end):totable(),
+            }
+          end)
+          :totable())
+      )
+
+      return proc_stat
     end
 
-    local content = file:read '*a'
-    file:close()
+    local stats1 = read_cpu_stats()
+    vim.defer_fn(function()
+      local stats2 = read_cpu_stats()
 
-    local user, nice, system, idle = content:match 'cpu%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)'
-    if not user then
-      callback { overall = 0, cores = {} }
-      return
-    end
+      --- @return number
+      local function calculate_usage(v1, v2)
+        assert(#v1 > 4, 'v1 should have at least 4 elements')
+        assert(#v2 > 4, 'v2 should have at least 4 elements')
+        assert(#v1 == #v2, 'v1 should have the same number of elements as v2')
 
-    local total = (tonumber(user) or 0)
-      + (tonumber(nice) or 0)
-      + (tonumber(system) or 0)
-      + (tonumber(idle) or 0)
-    local overall = ((total - (tonumber(idle) or 0)) / total) * 100
+        local idle1, idle2 = v1[4], v2[4]
+        local total1, total2 = 0, 0
+        for i = 1, #v1 do
+          total1 = total1 + v1[i]
+          total2 = total2 + v2[i]
+        end
+        local total_delta = total2 - total1
+        local idle_delta = idle2 - idle1
+        if total_delta <= 0 then return 0 end
+        return ((total_delta - idle_delta) / total_delta) * 100
+      end
 
-    local cores = {}
-    for core_user, core_nice, core_sys, core_idle in
-      content:gmatch 'cpu%d+%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)'
-    do
-      local core_total = (tonumber(core_user) or 0)
-        + (tonumber(core_nice) or 0)
-        + (tonumber(core_sys) or 0)
-        + (tonumber(core_idle) or 0)
-      local core_usage = ((core_total - (tonumber(core_idle) or 0)) / core_total) * 100
-      table.insert(cores, core_usage)
-    end
+      local overall = calculate_usage(stats1['cpu'], stats2['cpu'])
 
-    callback { overall = overall, cores = cores }
+      local cores = {}
+      for _, key in ipairs(vim.tbl_keys(stats1)) do
+        if key ~= 'cpu' then
+          local usage = calculate_usage(stats1[key], stats2[key])
+          table.insert(cores, usage)
+        end
+      end
+
+      callback { overall = overall, cores = cores }
+    end, 200)
   else
     callback { overall = 0, cores = {} }
   end
@@ -591,7 +617,7 @@ local function get_disk_usage(callback)
           local filesystem = parts[1]
           local size = parts[2]
           local used = parts[3]
-          local avail = parts[4]
+          -- local _avail = parts[4]
           local percent_col = parts[5]
 
           local mounted

@@ -461,7 +461,7 @@ local function CommentsView(ctx)
         if not is_collapsed then
           local text = strip_html(c.text)
           local wrapped = wrap_text(text, content_width)
-          for i, line in ipairs(wrapped) do
+          for _i, line in ipairs(wrapped) do
             table.insert(rendered_lines, h('text', {}, indent .. line))
           end
         end
