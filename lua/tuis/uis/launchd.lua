@@ -95,8 +95,8 @@ local TABS = {
 local HELP_KEYMAPS = {
   service = {
     { 'gi', 'Show service details' },
-    { 'gs', 'Start service (load)' },
-    { 'gS', 'Stop service (bootout)' },
+    { 'gs', 'Start service' },
+    { 'gS', 'Stop service' },
   },
   agent = {
     { 'gi', 'Show agent plist' },
@@ -425,7 +425,7 @@ local ServicesView = create_resource_view {
       ['gs'] = keymap(
         function()
           run(
-            { 'launchctl', 'load', service.name },
+            { 'launchctl', 'start', service.name },
             { root = namespace == 'system', text = true },
             vim.schedule_wrap(on_refresh)
           )
@@ -433,11 +433,11 @@ local ServicesView = create_resource_view {
       ),
       ['gS'] = keymap(
         function()
-          run({
-            'launchctl',
-            'bootout',
-            (namespace == 'system' and 'system/' or '') .. service.name,
-          }, { root = namespace == 'system', text = true }, vim.schedule_wrap(on_refresh))
+          run(
+            { 'launchctl', 'stop', service.name },
+            { root = namespace == 'system', text = true },
+            vim.schedule_wrap(on_refresh)
+          )
         end
       ),
     }
